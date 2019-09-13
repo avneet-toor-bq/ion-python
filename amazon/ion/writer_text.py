@@ -35,7 +35,7 @@ from . import symbols
 
 from .util import coroutine, unicode_iter
 from .core import DataEvent, Transition, IonEventType, IonType, TIMESTAMP_PRECISION_FIELD, TimestampPrecision, \
-    _ZERO_DELTA, TIMESTAMP_FRACTION_PRECISION_FIELD, MICROSECOND_PRECISION
+    _ZERO_DELTA, TIMESTAMP_FRACTION_PRECISION_FIELD, MICROSECOND_PRECISION, MICROSECONDS
 from .writer import partial_transition, writer_trampoline, serialize_scalar, validate_scalar_value, \
     illegal_state_null, NOOP_WRITER_EVENT
 from .writer import WriteEventType
@@ -174,9 +174,11 @@ def _bytes_datetime(dt):
 
     fractional_precision = getattr(original_dt, TIMESTAMP_FRACTION_PRECISION_FIELD, MICROSECOND_PRECISION)
     if fractional_precision:
-        fractional = dt.strftime('%f')
+        fractional = getattr(original_dt, MICROSECONDS, dt.strftime('%f'))
+        fractional = str(fractional)
         assert len(fractional) == MICROSECOND_PRECISION
-        if fractional[fractional_precision:] != ('0' * (MICROSECOND_PRECISION - fractional_precision)):
+        if fractional_precision <= MICROSECOND_PRECISION and \
+                fractional[fractional_precision:] != ('0' * (MICROSECOND_PRECISION - fractional_precision)):
             raise ValueError('Found timestamp fractional with more than the specified %d digits of precision.'
                              % (fractional_precision,))
         fractional = fractional[:fractional_precision]
